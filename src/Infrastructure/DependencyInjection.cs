@@ -1,11 +1,17 @@
 ﻿using System.Text;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Repositories;
+using Application.Abstractions.Behaviors;
+using Application.Recommendations;
+using FluentValidation;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Persistence.Repositories;
 using Infrastructure.Time;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +33,15 @@ public static class DependencyInjection
             .AddDatabase(configuration)
             .AddHealthChecks(configuration)
             .AddAuthenticationInternal(configuration)
-            .AddAuthorizationInternal();
+            .AddAuthorizationInternal()
+            .AddScoped<IRecommendationRepository, RecommendationRepository>()
+            .AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(CreateRecommendationSessionCommand).Assembly);
+            })
+            .AddValidatorsFromAssembly(typeof(CreateRecommendationSessionCommandValidator).Assembly)
+            //.Decorate(typeof(IRequestHandler<,>), typeof(ValidationDecorator<,>));        
+            .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationDecorator));
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {

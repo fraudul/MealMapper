@@ -22,7 +22,7 @@ COPY ["src/SharedKernel/SharedKernel.csproj", "src/SharedKernel/"]
 RUN dotnet restore "./src/Web.Api/Web.Api.csproj"
 COPY . .
 WORKDIR "/src/src/Web.Api"
-RUN dotnet build "./Web.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Web.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build -p:NoWarn=CA1873
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish

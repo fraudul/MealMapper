@@ -5,9 +5,9 @@ using SharedKernel;
 
 namespace Application.Abstractions.Behaviors;
 
-internal static class ValidationDecorator
+public static class ValidationDecorator
 {
-    internal sealed class CommandHandler<TCommand, TResponse>(
+    public sealed class CommandHandler<TCommand, TResponse>(
         ICommandHandler<TCommand, TResponse> innerHandler,
         IEnumerable<IValidator<TCommand>> validators)
         : ICommandHandler<TCommand, TResponse>
