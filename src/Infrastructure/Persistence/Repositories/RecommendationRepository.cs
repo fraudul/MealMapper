@@ -19,11 +19,12 @@ internal sealed class RecommendationRepository : IRecommendationRepository
         await _context.RecommendationSessions.AddAsync(session, cancellationToken);
     }
 
+    /*
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);
     }
-
+    */
     public Task<RecommendationSession?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _context.RecommendationSessions

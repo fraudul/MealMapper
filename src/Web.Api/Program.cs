@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading.RateLimiting;
 using Application;
 using HealthChecks.UI.Client;
 using Infrastructure;
@@ -28,9 +29,9 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Clean Architecture Web API",
+        Title = "MealMapper API",
         Version = "v1",
-        Description = "Template with Vertical Slice + CQRS"
+        Description = "Умный помощник по выбору еды в Минске (гео + бюджет + предпочтения)"
     });
 
     // Самое надёжное решение для Vertical Slice с nested Request/Response
@@ -53,15 +54,42 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services
+    .AddInfrastructure(builder.Configuration)
     .AddApplication()
-    .AddPresentation()
-    .AddInfrastructure(builder.Configuration);
+    .AddPresentation();
+    
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("Fixed", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
+
+/*builder.Services.AddOpenTelemetry()
+    .WithMetrics(builder =>
+    {
+        builder.AddAspNetCoreInstrumentation();
+        builder.AddHttpClientInstrumentation();
+    })
+    .WithTracing(builder =>
+    {
+        builder.AddAspNetCoreInstrumentation();
+        builder.AddHttpClientInstrumentation();
+    });
+*/
 
 WebApplication app = builder.Build();
 
 app.MapEndpoints();
+app.UseStaticFiles();
 
 app.UseForwardedHeaders();
 

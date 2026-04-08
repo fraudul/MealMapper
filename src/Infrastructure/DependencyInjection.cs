@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
+using Application.Abstractions;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Repositories;
@@ -9,6 +11,7 @@ using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Time;
 using MediatR;
@@ -20,6 +23,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel;
+using ApplicationDbContext = Infrastructure.Database.ApplicationDbContext;
 
 namespace Infrastructure;
 
@@ -27,22 +31,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration) =>
+        IConfiguration configuration)
+    {
+    
         services
             .AddServices()
             .AddDatabase(configuration)
             .AddHealthChecks(configuration)
             .AddAuthenticationInternal(configuration)
             .AddAuthorizationInternal()
-            .AddScoped<IRecommendationRepository, RecommendationRepository>()
-            .AddMediatR(cfg =>
-            {
-                cfg.RegisterServicesFromAssembly(typeof(CreateRecommendationSessionCommand).Assembly);
-            })
-            .AddValidatorsFromAssembly(typeof(CreateRecommendationSessionCommandValidator).Assembly)
-            //.Decorate(typeof(IRequestHandler<,>), typeof(ValidationDecorator<,>));        
-            .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationDecorator));
-
+            .AddScoped<IUnitOfWork, UnitOfWork>()
+            .AddScoped<IRecommendationRepository, RecommendationRepository>();
+        return services;
+        
+    }
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -54,13 +56,19 @@ public static class DependencyInjection
 
     private static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
-        string? connectionString = configuration.GetConnectionString("Database");
+        string? connectionString = configuration.GetConnectionString("Database") 
+                                   ?? throw new InvalidOperationException("Connection string 'Database' not found in configuration.");
 
-        services.AddDbContext<ApplicationDbContext>(
-            options => options
+        services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options
                 .UseNpgsql(connectionString, npgsqlOptions =>
-                    npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Default))
-                .UseSnakeCaseNamingConvention());
+                {
+                    npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.GetName().Name);
+                    npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Default);
+                })
+                .UseSnakeCaseNamingConvention();
+        });
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 

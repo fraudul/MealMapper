@@ -1,4 +1,6 @@
-﻿using Application.Abstractions.Repositories;
+﻿using Application.Abstractions;
+using Application.Abstractions.Messaging;
+using Application.Abstractions.Repositories;
 using Domain.Recommendations;
 using MediatR;
 using SharedKernel;
@@ -6,16 +8,18 @@ using SharedKernel;
 namespace Application.Recommendations;
 
 internal sealed class CreateRecommendationSessionCommandHandler 
-    : IRequestHandler<CreateRecommendationSessionCommand, Result<RecommendationSessionResponse>>
+    : ICommandHandler<CreateRecommendationSessionCommand, Result<RecommendationSessionResponse>>
 {
     private readonly IRecommendationRepository _repository;
-
-    public CreateRecommendationSessionCommandHandler(IRecommendationRepository repository)
+    private readonly IUnitOfWork _unitOfWork;
+    
+    public CreateRecommendationSessionCommandHandler(IRecommendationRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<RecommendationSessionResponse>> Handle(
+    public async Task<Result<Result<RecommendationSessionResponse>>> Handle(
         CreateRecommendationSessionCommand request, 
         CancellationToken cancellationToken)
     {
@@ -72,7 +76,7 @@ internal sealed class CreateRecommendationSessionCommandHandler
         session.AddRecommendations(recommendations);
 
         await _repository.AddAsync(session, cancellationToken);
-        await _repository.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 5. Возвращаем ответ
         var response = new RecommendationSessionResponse(session.Id, recommendations.Take(3).ToList());

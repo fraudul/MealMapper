@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Repositories;
+﻿using Application.Abstractions.Messaging;
+using Application.Abstractions.Repositories;
 using Domain.Recommendations;
 using MediatR;
 using SharedKernel;
@@ -15,8 +16,8 @@ public sealed record CreateRecommendationSessionCommand(
     DistancePreference DistancePref,
     string? CuisinePreference = null,
     bool OnlyNearby = false)
-    : IRequest<Result<RecommendationSessionResponse>>;
-
+    //: IRequest<Result<RecommendationSessionResponse>>;
+    : ICommand<Result<RecommendationSessionResponse>>;
 public sealed record RecommendationSessionResponse(
     Guid SessionId,
     List<RecommendationItem> Recommendations);

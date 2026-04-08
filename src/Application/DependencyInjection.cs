@@ -1,4 +1,5 @@
-﻿using Application.Abstractions.Behaviors;
+﻿using System.Reflection;
+using Application.Abstractions.Behaviors;
 using Application.Abstractions.Messaging;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,4 +1,5 @@
-﻿using Application.Recommendations;
+﻿using Application.Abstractions.Messaging;
+using Application.Recommendations;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
@@ -14,10 +15,10 @@ public static class RecommendationsEndpoints
 
         group.MapPost("/session", async (
                 [FromBody] CreateRecommendationSessionCommand command,
-                IMediator mediator,
+                ICommandHandler<CreateRecommendationSessionCommand, Result<RecommendationSessionResponse>> handler,
                 CancellationToken cancellationToken) =>
             {
-                Result<RecommendationSessionResponse> result = await mediator.Send(command, cancellationToken);
+                Result<Result<RecommendationSessionResponse>> result = await handler.Handle(command, cancellationToken);
 
                 return result.IsSuccess 
                     ? Results.Ok(result.Value) 
@@ -25,6 +26,8 @@ public static class RecommendationsEndpoints
             })
             .Produces<RecommendationSessionResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .WithName("CreateRecommendationSession");
+            .WithName("CreateRecommendationSession")
+            .WithDescription("Создаёт новую сессию рекомендаций по бюджету, геопозиции и предпочтениям пользователя")
+            .WithSummary("Старт сессии рекомендаций еды в Минске");
     }
 }
