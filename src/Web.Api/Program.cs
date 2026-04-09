@@ -89,6 +89,7 @@ builder.Services.AddRateLimiter(options =>
 WebApplication app = builder.Build();
 
 app.MapEndpoints();
+app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseForwardedHeaders();
@@ -101,7 +102,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
         c.RoutePrefix = "swagger";   // чтобы swagger был по /swagger
     });
-    app.ApplyMigrations();
+    await app.ApplyMigrationsAsync();
 }
 
 app.MapHealthChecks("health", new HealthCheckOptions
@@ -120,6 +121,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRecommendationsEndpoints();
+app.MapFallbackToFile("index.html");
 // REMARK: If you want to use Controllers, you'll need this.
 app.MapControllers();
 

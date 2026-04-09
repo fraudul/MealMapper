@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Data;
+using Domain.Recommendations;
 using Domain.Todos;
 using Domain.Users;
 using Infrastructure.DomainEvents;
@@ -13,14 +14,23 @@ public sealed class ApplicationDbContext(
     : DbContext(options), IApplicationDbContext
 {
     public DbSet<User> Users { get; set; }
-
     public DbSet<TodoItem> TodoItems { get; set; }
+    
+    public DbSet<FoodPlace> FoodPlaces { get; set; } = null!;
+    public DbSet<Recipe> Recipes { get; set; } = null!;
+    public DbSet<RecommendationSession> RecommendationSessions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-
         modelBuilder.HasDefaultSchema(Schemas.Default);
+        modelBuilder.Entity<RecommendationSession>()
+            .OwnsOne(s => s.UserLocation);
+        modelBuilder.Entity<RecommendationSession>()
+            .OwnsOne(s => s.Budget);
+        modelBuilder.Entity<RecommendationSession>()
+            .OwnsOne(s => s.Preferences);
+        base.OnModelCreating(modelBuilder);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

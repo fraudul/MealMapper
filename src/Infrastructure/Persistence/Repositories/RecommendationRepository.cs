@@ -1,22 +1,23 @@
-﻿using Application.Abstractions.Repositories;
+﻿using Application.Abstractions.Data;
+using Application.Abstractions.Repositories;
 using Domain.Recommendations;
-using Infrastructure.Persistence;
+using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
 
 internal sealed class RecommendationRepository : IRecommendationRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _dbContext;
 
-    public RecommendationRepository(ApplicationDbContext context)
+    public RecommendationRepository(IApplicationDbContext dbContext)
     {
-        _context = context;
+        _dbContext = dbContext;
     }
 
     public async Task AddAsync(RecommendationSession session, CancellationToken cancellationToken = default)
     {
-        await _context.RecommendationSessions.AddAsync(session, cancellationToken);
+        await _dbContext.RecommendationSessions.AddAsync(session, cancellationToken);
     }
 
     /*
@@ -27,7 +28,7 @@ internal sealed class RecommendationRepository : IRecommendationRepository
     */
     public Task<RecommendationSession?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return _context.RecommendationSessions
+        return _dbContext.RecommendationSessions
             .AsNoTracking()                    // важно для read-only запросов
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
@@ -40,7 +41,7 @@ internal sealed class RecommendationRepository : IRecommendationRepository
         CancellationToken cancellationToken = default)
     {
         // Здесь пока простой запрос. Позже добавим Domain Service с более умным скорингом + интеграцией карт
-        return await _context.FoodPlaces
+        return await _dbContext.FoodPlaces
             .AsNoTracking()
             .Where(place => place.MatchesPreferences(preferences, userLocation, budget))
             .OrderByDescending(place => place.Rating)
@@ -54,7 +55,7 @@ internal sealed class RecommendationRepository : IRecommendationRepository
         int limit,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Recipes
+        return await _dbContext.Recipes
             .AsNoTracking()
             .Where(recipe => recipe.MatchesBudget(budget))
             .Take(limit)
