@@ -21,3 +21,10 @@ public sealed record CreateRecommendationSessionCommand(
 public sealed record RecommendationSessionResponse(
     Guid SessionId,
     List<RecommendationItem> Recommendations);
+/*public sealed record RecommendationItem(
+    Guid Id,
+    string Name,
+    string Description,
+    string Type,           // "FoodPlace" или "Recipe"
+    double Score,          // от 0.0 до 1.0
+    string Reason);*/

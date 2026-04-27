@@ -7,5 +7,7 @@ public sealed record UserPreferences(
     string? CuisinePreference = null,
     bool OnlyNearby = false);
 
-public enum FoodActionType { Buy, Order, CookAtHome }
+public enum FoodActionType { Buy, Order, CookAtHome,
+    
+}
 public enum DistancePreference { Near, Medium, Far }
